@@ -4,7 +4,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                %d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n
+                [BACKEND] %d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n
             </pattern>
         </encoder>
     </appender>
@@ -13,7 +13,7 @@
     <logger name="com.example.boot_redis_kafka_mysql.crypto" level="DEBUG"/>
     
     <!-- WebSocket 관련 로그 -->
-    <logger name="com.example.boot_redis_kafka_mysql.crypto.exchange" level="INFO"/>
+    <logger name="com.example.boot_redis_kafka_mysql.crypto.exchange" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

@@ -3,8 +3,11 @@ package com.example.boot_redis_kafka_mysql.crypto.exchange.handler;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.client.WebSocketClient;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.example.boot_redis_kafka_mysql.crypto.exchange.config.ExchangeProperties;
 import com.example.boot_redis_kafka_mysql.crypto.exchange.connection.WebSocketConnectionManager;
 import com.example.boot_redis_kafka_mysql.crypto.exchange.model.TickerData;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class BinanceWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final WebSocketConnectionManager connectionManager;
+    private final ExchangeProperties properties;
     private WebSocketSession session;
     
     @Override
@@ -71,5 +75,18 @@ public class BinanceWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         log.warn("Binance WebSocket connection closed: {}", status);
+        this.session = null;
+        
+        try {
+            log.info("Attempting immediate reconnection to Binance...");
+            WebSocketClient client = new StandardWebSocketClient();
+            client.execute(this, properties.getBinance().getWsUrl());
+        } catch (Exception e) {
+            log.error("Failed to reconnect to Binance", e);
+        }
+    }
+    
+    public boolean isConnected() {
+        return session != null && session.isOpen();
     }
 } 

@@ -28,6 +28,10 @@ logging:
   level:
     org.springframework.web.socket: INFO
 
+websocket:
+  endpoint: ${WS_ENDPOINT}  # .env 파일의 WS_ENDPOINT 값을 사용
+  allowed-origins: ${WS_ALLOWED_ORIGINS}  # .env 파일의 WS_ALLOWED_ORIGINS 값을 사용
+
 ---
 # dev 프로파일
 spring:

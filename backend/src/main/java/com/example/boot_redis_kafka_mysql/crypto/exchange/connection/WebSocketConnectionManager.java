@@ -2,6 +2,7 @@ package com.example.boot_redis_kafka_mysql.crypto.exchange.connection;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -89,7 +90,7 @@ public class WebSocketConnectionManager {
         try {
             // Upbit 핸들러 초기화 및 연결
             log.info("Initializing Upbit handler...");
-            upbitHandler = new UpbitWebSocketHandler(objectMapper, this);
+            upbitHandler = new UpbitWebSocketHandler(objectMapper, this, properties);
             client.execute(
                 upbitHandler,
                 properties.getUpbit().getWsUrl()
@@ -98,7 +99,7 @@ public class WebSocketConnectionManager {
             
             // Binance 핸들러 초기화 및 연결
             log.info("Initializing Binance handler...");
-            binanceHandler = new BinanceWebSocketHandler(objectMapper, this);
+            binanceHandler = new BinanceWebSocketHandler(objectMapper, this, properties);
             client.execute(
                 binanceHandler,
                 properties.getBinance().getWsUrl()
@@ -125,5 +126,12 @@ public class WebSocketConnectionManager {
         } else {
             log.error("Binance handler is not initialized");
         }
+    }
+
+    @Scheduled(fixedRate = 5000)  // 5초마다 실행
+    public void logConnectionStatus() {
+        log.info("WebSocket Connection Status:");
+        log.info("Upbit: {}", upbitHandler != null && upbitHandler.isConnected() ? "Connected" : "Disconnected");
+        log.info("Binance: {}", binanceHandler != null && binanceHandler.isConnected() ? "Connected" : "Disconnected");
     }
 }
