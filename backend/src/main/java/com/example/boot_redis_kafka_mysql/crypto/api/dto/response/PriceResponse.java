@@ -1,4 +1,4 @@
-package com.example.boot_redis_kafka_mysql.crypto.exchange.model;
+package com.example.boot_redis_kafka_mysql.crypto.api.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TickerData {
-    private String exchange;    // UPBIT, BINANCE
-    private String symbol;      // KRW-BTC, BTCUSDT
+public class PriceResponse {
+    private String exchange;
+    private String market;
     private double price;
     private double volume;
     private long timestamp;

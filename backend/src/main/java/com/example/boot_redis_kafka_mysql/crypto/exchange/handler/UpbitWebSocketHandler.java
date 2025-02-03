@@ -21,13 +21,25 @@ import lombok.extern.slf4j.Slf4j;
 public class UpbitWebSocketHandler extends AbstractWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final WebSocketConnectionManager connectionManager;
+    private WebSocketSession session;
     
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        this.session = session;
         log.debug("Upbit WebSocket Connected");
-        
-        String subscribeMessage = "[{\"ticket\":\"test\"},{\"type\":\"ticker\",\"codes\":[\"KRW-BTC\"]}]";
-        session.sendMessage(new TextMessage(subscribeMessage));
+    }
+    
+    public void subscribe(String market, String type) {
+        try {
+            String subscribeMessage = String.format(
+                "[{\"ticket\":\"UNIQUE_TICKET\"},{\"type\":\"%s\",\"codes\":[\"%s\"]}]",
+                type, market
+            );
+            session.sendMessage(new TextMessage(subscribeMessage));
+            log.info("Subscribed to Upbit market: {}, type: {}", market, type);
+        } catch (Exception e) {
+            log.error("Failed to subscribe to market: {}, type: {}", market, type, e);
+        }
     }
     
     @Override
@@ -62,6 +74,7 @@ public class UpbitWebSocketHandler extends AbstractWebSocketHandler {
                 .build();
                 
             connectionManager.updateUpbitTicker(tickerData);
+            log.debug("Updated Upbit ticker: {}", tickerData);
         }
     }
     

@@ -1,5 +1,7 @@
 package com.example.boot_redis_kafka_mysql.crypto.exchange.connection;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -15,8 +17,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -29,16 +29,18 @@ public class WebSocketConnectionManager {
     @Getter
     private volatile TickerData lastBinanceTicker;
     
-    // Rate limiting을 위한 카운터
     private final AtomicInteger upbitMessageCount = new AtomicInteger(0);
     private final AtomicInteger binanceMessageCount = new AtomicInteger(0);
     private volatile long lastUpbitResetTime = System.currentTimeMillis();
     private volatile long lastBinanceResetTime = System.currentTimeMillis();
     
+    private UpbitWebSocketHandler upbitHandler;
+    private BinanceWebSocketHandler binanceHandler;
+    
     public void updateUpbitTicker(TickerData ticker) {
         if (canProcessMessage("UPBIT")) {
             this.lastUpbitTicker = ticker;
-            log.info("[UPBIT] Price: {}, Volume: {}", 
+            log.debug("[UPBIT] Price: {}, Volume: {}", 
                 String.format("%.0f", ticker.getPrice()), 
                 String.format("%.4f", ticker.getVolume()));
         }
@@ -47,7 +49,7 @@ public class WebSocketConnectionManager {
     public void updateBinanceTicker(TickerData ticker) {
         if (canProcessMessage("BINANCE")) {
             this.lastBinanceTicker = ticker;
-            log.info("[BINANCE] Price: {}, Volume: {}", 
+            log.debug("[BINANCE] Price: {}, Volume: {}", 
                 String.format("%.2f", ticker.getPrice()), 
                 String.format("%.4f", ticker.getVolume()));
         }
@@ -62,7 +64,6 @@ public class WebSocketConnectionManager {
         long lastResetTime = 
             "UPBIT".equals(exchange) ? lastUpbitResetTime : lastBinanceResetTime;
         
-        // 1초마다 카운터 리셋
         if (currentTime - lastResetTime >= 1000) {
             counter.set(0);
             if ("UPBIT".equals(exchange)) {
@@ -72,7 +73,6 @@ public class WebSocketConnectionManager {
             }
         }
         
-        // 초당 메시지 제한 체크
         if (counter.get() < config.getRateLimit().getMaxMessagesPerSecond()) {
             counter.incrementAndGet();
             return true;
@@ -83,17 +83,24 @@ public class WebSocketConnectionManager {
     
     @PostConstruct
     public void connect() {
+        log.info("Initializing WebSocket connections...");
         WebSocketClient client = new StandardWebSocketClient();
         
         try {
+            // Upbit 핸들러 초기화 및 연결
+            log.info("Initializing Upbit handler...");
+            upbitHandler = new UpbitWebSocketHandler(objectMapper, this);
             client.execute(
-                new UpbitWebSocketHandler(objectMapper, this),
+                upbitHandler,
                 properties.getUpbit().getWsUrl()
             );
             log.info("Upbit WebSocket connection initiated");
             
+            // Binance 핸들러 초기화 및 연결
+            log.info("Initializing Binance handler...");
+            binanceHandler = new BinanceWebSocketHandler(objectMapper, this);
             client.execute(
-                new BinanceWebSocketHandler(objectMapper, this),
+                binanceHandler,
                 properties.getBinance().getWsUrl()
             );
             log.info("Binance WebSocket connection initiated");
@@ -103,4 +110,20 @@ public class WebSocketConnectionManager {
             throw new RuntimeException("Failed to connect to WebSocket", e);
         }
     }
-} 
+    
+    public void subscribeUpbitMarket(String market, String type) {
+        if (upbitHandler != null) {
+            upbitHandler.subscribe(market, type);
+        } else {
+            log.error("Upbit handler is not initialized");
+        }
+    }
+    
+    public void subscribeBinanceMarket(String symbol, String type) {
+        if (binanceHandler != null) {
+            binanceHandler.subscribe(symbol, type);
+        } else {
+            log.error("Binance handler is not initialized");
+        }
+    }
+}

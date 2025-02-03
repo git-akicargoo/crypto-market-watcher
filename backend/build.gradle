@@ -55,8 +55,17 @@ dependencies {
 	// lombok for test
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// WebSocket 테스트 의존성 추가
+	testImplementation 'org.springframework.boot:spring-boot-starter-websocket'
+	testImplementation 'org.springframework:spring-messaging'
+
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+		showStandardStreams = true
+	}
 }

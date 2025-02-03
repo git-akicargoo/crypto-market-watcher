@@ -18,23 +18,33 @@ import lombok.extern.slf4j.Slf4j;
 public class BinanceWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final WebSocketConnectionManager connectionManager;
+    private WebSocketSession session;
     
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        this.session = session;
         log.debug("Binance WebSocket Connected");
-        
-        String subscribeMessage = "{\"method\":\"SUBSCRIBE\",\"params\":[\"btcusdt@ticker\"],\"id\":1}";
-        session.sendMessage(new TextMessage(subscribeMessage));
+    }
+    
+    public void subscribe(String symbol, String type) {
+        try {
+            // BTC-USDT -> btcusdt 형식으로 변환
+            String formattedSymbol = symbol.toLowerCase().replace("-", "");
+            String subscribeMessage = String.format(
+                "{\"method\":\"SUBSCRIBE\",\"params\":[\"%s@%s\"],\"id\":%d}",
+                formattedSymbol, type, System.currentTimeMillis()
+            );
+            session.sendMessage(new TextMessage(subscribeMessage));
+            log.info("Subscribed to Binance symbol: {}, type: {}", symbol, type);
+        } catch (Exception e) {
+            log.error("Failed to subscribe to symbol: {}, type: {}", symbol, type, e);
+        }
     }
     
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             JsonNode node = objectMapper.readTree(message.getPayload());
-            
-            if (node.has("result") || node.has("id")) {
-                return;
-            }
             
             if (node.has("e") && "24hrTicker".equals(node.get("e").asText())) {
                 TickerData tickerData = TickerData.builder()
@@ -46,6 +56,7 @@ public class BinanceWebSocketHandler extends TextWebSocketHandler {
                     .build();
                     
                 connectionManager.updateBinanceTicker(tickerData);
+                log.debug("Updated Binance ticker: {}", tickerData);
             }
         } catch (Exception e) {
             log.error("Failed to process Binance message", e);
