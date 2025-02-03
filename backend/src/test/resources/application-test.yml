@@ -1,0 +1,12 @@
+logging:
+  level:
+    root: INFO
+    com.example.boot_redis_kafka_mysql: DEBUG
+    org.springframework.web.socket: DEBUG
+
+crypto:
+  exchange:
+    upbit:
+      ws-url: wss://api.upbit.com/websocket/v1
+    binance:
+      ws-url: wss://stream.binance.com:9443/ws 

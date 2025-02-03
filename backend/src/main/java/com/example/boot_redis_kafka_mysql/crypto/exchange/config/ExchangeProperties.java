@@ -1,0 +1,30 @@
+package com.example.boot_redis_kafka_mysql.crypto.exchange.config;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import lombok.Data;
+
+@Data
+@Configuration
+@ConfigurationProperties(prefix = "crypto.exchange")
+public class ExchangeProperties {
+    private Exchange upbit;
+    private Exchange binance;
+
+    @Data
+    public static class Exchange {
+        private String wsUrl;
+        private String subscribeFormat;
+        private int reconnectDelay;
+        private int maxRetryAttempts;
+        private RateLimit rateLimit;
+    }
+
+    @Data
+    public static class RateLimit {
+        private int maxConnectionsPerMinute;
+        private int maxMessagesPerSecond;
+        private int maxStreamsPerConnection;
+    }
+}

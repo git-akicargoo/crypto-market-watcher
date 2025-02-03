@@ -1,0 +1,38 @@
+spring:
+  profiles:
+    active: test
+
+server:
+  port: 8080
+
+websocket:
+  allowed-origins: "*"
+  endpoint: "/ws"
+
+crypto:
+  exchange:
+    upbit:
+      ws-url: wss://api.upbit.com/websocket/v1
+      subscribe-format: '[{"ticket":"test"},{"type":"ticker","codes":["%s"]}]'
+      reconnect-delay: 5000
+      max-retry-attempts: 3
+      rate-limit:
+        max-connections-per-minute: 200
+        max-messages-per-second: 3
+        max-streams-per-connection: 800
+    binance:
+      ws-url: wss://stream.binance.com:9443/ws
+      subscribe-format: '{"method":"SUBSCRIBE","params":["%s@ticker"],"id":1}'
+      reconnect-delay: 5000
+      max-retry-attempts: 3
+      rate-limit:
+        max-connections-per-minute: 300
+        max-messages-per-second: 5
+        max-streams-per-connection: 1000
+
+logging:
+  level:
+    root: INFO
+    com.example.boot_redis_kafka_mysql: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG 

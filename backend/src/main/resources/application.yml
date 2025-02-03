@@ -1,0 +1,57 @@
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  config:
+    import: optional:file:.env[.properties]
+
+server:
+  port: ${SERVER_PORT:8080}
+
+crypto:
+  exchange:
+    upbit:
+      ws-url: wss://api.upbit.com/websocket/v1
+      subscribe-format: '[{"ticket":"test"},{"type":"ticker","codes":["%s"]}]'
+      reconnect-delay: 5000
+      max-retry-attempts: 3
+      rate-limit:
+        max-connections-per-minute: 200  # 5분당 300개 제한, 안전하게 200으로 설정
+        max-messages-per-second: 3       # 초당 5개 제한, 여유있게 3개로 설정
+        max-streams-per-connection: 800  # 최대 1024개 제한, 안전하게 800으로 설정
+    binance:
+      ws-url: wss://stream.binance.com:9443/ws
+      subscribe-format: '{"method":"SUBSCRIBE","params":["%s@ticker"],"id":1}'
+      reconnect-delay: 5000
+      max-retry-attempts: 3
+
+logging:
+  level:
+    org.springframework.web.socket: INFO
+
+---
+# dev 프로파일
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+server:
+  port: ${DEV_SERVER_PORT}
+
+logging:
+  level:
+    org.springframework.web.socket: ${DEV_LOGGING_LEVEL}
+
+---
+# prod 프로파일
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+server:
+  port: ${PROD_SERVER_PORT}
+
+logging:
+  level:
+    org.springframework.web.socket: ${PROD_LOGGING_LEVEL} 
